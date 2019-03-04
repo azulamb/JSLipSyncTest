@@ -31,7 +31,7 @@ const media = navigator.mediaDevices.getUserMedia(
 media.then( ( stream ) =>
 {
 	Init( stream );
-} );
+} ).catch( ( error ) => { console.log( error ); } );
 
 function Init( stream )
 {
