@@ -17,6 +17,7 @@ body > div { position: relative; }
 <div>
 	<video id="video" width="400" height="300" autoplay></video>
 	<canvas id="canvas" width="400" height="300"></canvas>
+	<div id="fps"></div>
 </div>
 <script>
 function RenderMouse( context, positions )
@@ -43,7 +44,7 @@ function RenderMouse( context, positions )
 	context.closePath();
 	context.stroke();
 }
-function Init( stream, video, canvas )
+function Init( stream, video, canvas, fps )
 {
 	video.src = window.URL.createObjectURL( stream );
 	const context = canvas.getContext( '2d' );
@@ -52,6 +53,8 @@ function Init( stream, video, canvas )
 	tracker.init( pModel );
 	tracker.start( video );
 
+	let prev = Date.now();
+	let count = 0;
 	function drawLoop()
 	{
 		requestAnimationFrame( drawLoop );
@@ -62,6 +65,10 @@ function Init( stream, video, canvas )
 		context.clearRect( 0, 0, canvas.width, canvas.height );
 		//tracker.draw(canvas);
 		RenderMouse( context, positions );
+		const now = Date.now();
+		if ( 1000 <= now - prev ) { prev = now; count = 0; }
+		++count;
+		fps.textContent = count;
 	}
 	drawLoop();
 }
@@ -69,6 +76,7 @@ document.addEventListener( 'DOMContentLoaded', () =>
 {
 	const video = document.getElementById( 'video' );
 	const canvas = document.getElementById( 'canvas' );
+	const fps = document.getElementById( 'fps' );
 
 	const media = navigator.mediaDevices.getUserMedia(
 	{
@@ -77,7 +85,7 @@ document.addEventListener( 'DOMContentLoaded', () =>
 	} );
 	media.then( ( stream ) =>
 	{
-		Init( stream, video, canvas );
+		Init( stream, video, canvas, fps );
 	} ).catch( ( error ) =>
 	{
 		console.log( error );
