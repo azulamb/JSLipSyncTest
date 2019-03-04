@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<script src="clmtrackr.min.js"></script>
+	<script src="model_pca_20_svm.js"></script>
+	<title>リップシンクサンプル</title>
+	<style>
+body > div { position: relative; }
+#video { transform: scaleX(-1); }
+#canvas { transform: scaleX(-1); }
+	</style>
+</head>
+ 
+<body>
+<div>
+	<video id="video" width="400" height="300" autoplay></video>
+	<canvas id="canvas" width="400" height="300"></canvas>
+</div>
+<script>
+const video = document.getElementById( 'video' );
+const canvas = document.getElementById( 'canvas' );
+const context = canvas.getContext( '2d' );
+
+const media = navigator.mediaDevices.getUserMedia(
+{
+	video: { facingMode: 'user' },
+	audio: false,
+} );
+media.then( ( stream ) =>
+{
+	Init( stream );
+} );
+
+function Init( stream )
+{
+	video.src = window.URL.createObjectURL( stream );
+
+	const tracker = new clm.tracker();
+	tracker.init( pModel );
+	tracker.start(video);
+
+	function drawLoop()
+	{
+		requestAnimationFrame( drawLoop );
+		// 顔の座標を取得
+		const positions = tracker.getCurrentPosition();
+		console.log(positions);
+		context.clearRect( 0, 0, canvas.width, canvas.height );
+		//tracker.draw(canvas);
+	}
+	drawLoop();
+}
+</script>
+</body>
+</html>
