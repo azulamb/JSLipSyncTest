@@ -66,9 +66,13 @@ function Init( stream, video, canvas, fps )
 		//tracker.draw(canvas);
 		RenderMouse( context, positions );
 		const now = Date.now();
-		if ( 1000 <= now - prev ) { prev = now; count = 0; }
+		if ( 1000 <= now - prev )
+		{
+			prev = now;
+			fps.textContent = count;
+			count = 0;
+		}
 		++count;
-		fps.textContent = count;
 	}
 	drawLoop();
 }
