@@ -19,6 +19,31 @@ body > div { position: relative; }
 	<canvas id="canvas" width="400" height="300"></canvas>
 </div>
 <script>
+function RenderMouse( context, positions )
+{
+	const left = positions[ 44 ];
+	const right = positions[ 50 ];
+	const up = [ //47,60
+		( positions[ 47 ][ 0 ] + positions[ 60 ][ 0 ] ) / 2,
+		( positions[ 47 ][ 1 ] + positions[ 60 ][ 1 ] ) / 2,
+	];
+	const down = [ //53,57
+		( positions[ 53 ][ 0 ] + positions[ 57 ][ 0 ] ) / 2,
+		( positions[ 53 ][ 1 ] + positions[ 57 ][ 1 ] ) / 2,
+	];
+
+	context.lineWidth = 10;
+	context.strokeStyle = 'red';
+
+	context.beginPath();
+	context.moveTo( left[ 0 ], left[ 1 ] );
+	context.lineTo( up[ 0 ], up[ 1 ] );
+	context.lineTo( right[ 0 ], right[ 1 ] );
+	context.lineTo( down[ 0 ], down[ 1 ] );
+	context.lineTo( left[ 0 ], left[ 1 ] );
+	context.closePath();
+	context.stroke();
+}
 function Init( stream, video, canvas )
 {
 	video.src = window.URL.createObjectURL( stream );
