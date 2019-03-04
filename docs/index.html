@@ -19,23 +19,10 @@ body > div { position: relative; }
 	<canvas id="canvas" width="400" height="300"></canvas>
 </div>
 <script>
-const video = document.getElementById( 'video' );
-const canvas = document.getElementById( 'canvas' );
-const context = canvas.getContext( '2d' );
-
-const media = navigator.mediaDevices.getUserMedia(
-{
-	video: { facingMode: 'user' },
-	audio: false,
-} );
-media.then( ( stream ) =>
-{
-	Init( stream );
-} ).catch( ( error ) => { console.log( error ); } );
-
-function Init( stream )
+function Init( stream, video, canvas )
 {
 	video.src = window.URL.createObjectURL( stream );
+	const context = canvas.getContext( '2d' );
 
 	const tracker = new clm.tracker();
 	tracker.init( pModel );
@@ -52,6 +39,21 @@ function Init( stream )
 	}
 	drawLoop();
 }
+document.addEventListener( 'DOMContentLoaded', () =>
+{
+	const video = document.getElementById( 'video' );
+	const canvas = document.getElementById( 'canvas' );
+
+	const media = navigator.mediaDevices.getUserMedia(
+	{
+		video: { facingMode: 'user' },
+		audio: false,
+	} );
+	media.then( ( stream ) =>
+	{
+		Init( stream, video, canvas );
+	} ).catch( ( error ) => { console.log( error ); } );
+} );
 </script>
 </body>
 </html>
