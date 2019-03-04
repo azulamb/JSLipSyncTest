@@ -52,7 +52,10 @@ document.addEventListener( 'DOMContentLoaded', () =>
 	media.then( ( stream ) =>
 	{
 		Init( stream, video, canvas );
-	} ).catch( ( error ) => { console.log( error ); } );
+	} ).catch( ( error ) =>
+	{
+		console.log( error );
+	} );
 } );
 </script>
 </body>
