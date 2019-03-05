@@ -65,7 +65,6 @@ function GetFace( video, canvas, context, box )
 		canvas.height = video.height;
 		context.drawImage( video, 0, 0 );
 	}
-	tracker.track( canvas );
 }
 
 function UpdateFaceBox( positions, canvas )
@@ -111,7 +110,7 @@ function Init( stream, video, canvas, fcanvas, fps )
 		// 顔を切り抜く
 		GetFace( video, fcanvas, face, box );
 		// 顔の座標を取得
-		//tracker.track( fcanvas );
+		tracker.track( fcanvas );
 		const positions = tracker.getCurrentPosition();
 		if ( positions === false ) { return; }
 		if ( !box )
