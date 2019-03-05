@@ -46,7 +46,7 @@ function RenderMouse( context, positions )
 }
 function Init( stream, video, canvas, fps )
 {
-	video.src = window.URL.createObjectURL( stream );
+	video.srcObject = window.URL.createObjectURL( stream );
 	const context = canvas.getContext( '2d' );
 
 	const tracker = new clm.tracker();
