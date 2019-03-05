@@ -107,7 +107,7 @@ function Init( stream, video, canvas, fcanvas, fps )
 		// 顔を切り抜く
 		GetFace( video, fcanvas, face, box );
 		// 顔の座標を取得
-		tracker.track( face );
+		tracker.track( fcanvas );
 		const positions = tracker.getCurrentPosition();
 		if ( positions === false ) { return; }
 		if ( !box )
