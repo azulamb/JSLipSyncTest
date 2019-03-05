@@ -94,7 +94,7 @@ document.addEventListener( 'DOMContentLoaded', () =>
 	} ).catch( ( error ) =>
 	{
 		console.log( error );
-		fps.textContent = error.message + '';
+		fps.textContent = [ error.name, error.message ].join( ':' );
 	} );
 } );
 </script>
