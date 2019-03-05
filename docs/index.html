@@ -21,6 +21,7 @@ body > div { position: relative; }
 	<div id="fps">FPS:</div>
 </div>
 <script>
+// 口の描画
 function RenderMouse( context, positions )
 {
 	const left = positions[ 44 ];
@@ -45,29 +46,41 @@ function RenderMouse( context, positions )
 	context.closePath();
 	context.stroke();
 }
+
+// 初期化
 function Init( stream, video, canvas, wire, fps )
 {
-	//video.src = window.URL.createObjectURL( stream );
+	// HTMLに埋め込んだ<video>にWebカメラからの映像を流す。
 	video.srcObject = stream;
+
 	const context = canvas.getContext( '2d' );
 
+	// 映像からリアルタイムに顔を検出する。
 	const tracker = new clm.tracker();
 	tracker.init( pModel );
 	tracker.start( video );
 
+	// 簡易FPS計測のための準備
 	let prev = Date.now();
 	let count = 0;
+
+	// 描画の処理。
 	function drawLoop()
 	{
-		// 顔の座標を取得
+		// 顔の座標を取得。
 		const positions = tracker.getCurrentPosition();
 		if ( positions === false ) { return NextFrame(); }
-		//console.log(positions);
+
+		// 座標の検出に成功。
+		//console.log( positions );
 		context.clearRect( 0, 0, canvas.width, canvas.height );
 		if ( wire.checked ) { tracker.draw(canvas); }
+		// 口の描画。
 		RenderMouse( context, positions );
+
 		NextFrame();
 	}
+	// 画面更新
 	function NextFrame()
 	{
 		const now = Date.now();
@@ -82,6 +95,8 @@ function Init( stream, video, canvas, wire, fps )
 	}
 	drawLoop();
 }
+
+// 一応安全面を考慮し、ページロード後に処理を行う。
 document.addEventListener( 'DOMContentLoaded', () =>
 {
 	const video = document.getElementById( 'video' );
@@ -89,6 +104,7 @@ document.addEventListener( 'DOMContentLoaded', () =>
 	const fps = document.getElementById( 'fps' );
 	const wire = document.getElementById( 'wire' );
 
+	// Webカメラの読み取り許可を求める。
 	const media = navigator.mediaDevices.getUserMedia(
 	{
 		video: { facingMode: 'user' },
@@ -96,6 +112,7 @@ document.addEventListener( 'DOMContentLoaded', () =>
 	} );
 	media.then( ( stream ) =>
 	{
+		// 許可が出たので初期化を行う。
 		Init( stream, video, canvas, wire, fps );
 	} ).catch( ( error ) =>
 	{
