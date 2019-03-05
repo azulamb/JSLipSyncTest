@@ -17,17 +17,22 @@ body > div { position: relative; }
 <div>
 	<video id="video" width="400" height="300" autoplay></video>
 	<canvas id="canvas" width="400" height="300"></canvas>
+	<canvas id="face" width="400" height="300"></canvas>
 	<div id="fps"></div>
 </div>
 <script>
-function RenderMouse( context, positions )
+function RenderMouse( context, positions, box )
 {
+	// 口の描画を行います。
+	// 44,50には口の右と左端の座標
 	const left = positions[ 44 ];
 	const right = positions[ 50 ];
+	// 47,60は上唇中央の上と下の座標
 	const up = [ //47,60
 		( positions[ 47 ][ 0 ] + positions[ 60 ][ 0 ] ) / 2,
 		( positions[ 47 ][ 1 ] + positions[ 60 ][ 1 ] ) / 2,
 	];
+	// 53,57は下唇中央の上と下の座標
 	const down = [ //53,57
 		( positions[ 53 ][ 0 ] + positions[ 57 ][ 0 ] ) / 2,
 		( positions[ 53 ][ 1 ] + positions[ 57 ][ 1 ] ) / 2,
@@ -36,35 +41,87 @@ function RenderMouse( context, positions )
 	context.lineWidth = 3;
 	context.strokeStyle = 'red';
 
+	// 顔の座標は切り取るので切り取り開始座標を足す。
 	context.beginPath();
-	context.moveTo( left[ 0 ], left[ 1 ] );
-	context.lineTo( up[ 0 ], up[ 1 ] );
-	context.lineTo( right[ 0 ], right[ 1 ] );
-	context.lineTo( down[ 0 ], down[ 1 ] );
+	context.moveTo( box.x + left[ 0 ],  box.y + left[ 1 ] );
+	context.lineTo( box.x + up[ 0 ],    box.y + up[ 1 ] );
+	context.lineTo( box.x + right[ 0 ], box.y + right[ 1 ] );
+	context.lineTo( box.x + down[ 0 ],  box.y + down[ 1 ] );
 	context.closePath();
 	context.stroke();
 }
-function Init( stream, video, canvas, fps )
+
+function GetFace( video, canvas, face, box )
+{
+	// Videoの内容をCanvasに転写。
+	if ( box )
+	{
+		// 切り取り
+		face.drawImage( video, 0, 0, box.w, box.h, box.x, box.y, box.w, box.h );
+	} else
+	{
+		// 全画面
+		canvas.width = video.width;
+		canvas.height = video.height;
+		face.drawImage( video, 0, 0 );
+	}
+}
+
+function UpdateFaceBox( positions, canvas )
+{
+	// 人の顔は大雑把に目が顔の上下の中央付近に配置されます。
+	// そこで、右目の左側と左目の右側の中心を顔の中心とし、そこから顎や顔の左右の座標を元に顔が入る箱を作ります。
+	// 右目の左側と左目の右側は25,30
+	const cx = ( positions[ 25 ][ 0 ] + positions[ 30 ][ 0 ] ) / 2;
+	const cy = ( positions[ 25 ][ 1 ] + positions[ 30 ][ 1 ] ) / 2;
+
+	// 顔の上下は中央から顎までの距離から算出する。顎は7。
+	// 高さは倍×予約を含めた1.1倍にするので2.2倍する。
+	const height = ( positions[ 7 ][ 1 ] - cy ) * 2.2;
+
+	// 顔の左右は顔の一番右と左端にしたいが、とりあえず余分に切り取ることになるので、顔輪郭の端っこを使う。
+	// 顔の輪郭の開始点は0で終了点は14なので、そこから横幅を計算する。
+	// また顔の領域は1.1倍くらいの大きさにすることにする。
+	const width = ( positions[ 14 ][ 0 ] - positions[ 0 ][ 0 ] ) * 1.2;
+
+	// 切り取り領域を作る。とりあえず範囲外のこととかは全く考えないこととする。
+	return { x: cx - width / 2, y: cy - height / 2, w: width, h: height };
+}
+
+function Init( stream, video, canvas, fcanvas, fps )
 {
 	video.src = window.URL.createObjectURL( stream );
 	const context = canvas.getContext( '2d' );
 
 	const tracker = new clm.tracker();
 	tracker.init( pModel );
-	tracker.start( video );
+	//tracker.start( video );
 
 	let prev = Date.now();
 	let count = 0;
+	const face = fcanvas.getContext( '2d' );
+	const box = undefined;
 	function drawLoop()
 	{
 		requestAnimationFrame( drawLoop );
+		// 顔を切り抜く
+		GetFace( video, fcanvas, face, box );
 		// 顔の座標を取得
+		tracker.track( face );
 		const positions = tracker.getCurrentPosition();
 		if ( positions === false ) { return; }
-		//console.log(positions);
-		context.clearRect( 0, 0, canvas.width, canvas.height );
-		//tracker.draw(canvas);
-		RenderMouse( context, positions );
+		if ( !box )
+		{
+			// 次回以降顔座標切り取りを行う。
+			box = UpdateFaceBox( positions, fcanvas );
+		} else
+		{
+			// 唇の描画を行う。
+			//console.log(positions);
+			context.clearRect( 0, 0, canvas.width, canvas.height );
+			//tracker.draw(canvas);
+			RenderMouse( context, positions, box );
+		}
 		const now = Date.now();
 		if ( 1000 <= now - prev )
 		{
@@ -76,10 +133,12 @@ function Init( stream, video, canvas, fps )
 	}
 	drawLoop();
 }
+
 document.addEventListener( 'DOMContentLoaded', () =>
 {
 	const video = document.getElementById( 'video' );
 	const canvas = document.getElementById( 'canvas' );
+	const fcanvas = document.getElementById( 'face' );
 	const fps = document.getElementById( 'fps' );
 
 	const media = navigator.mediaDevices.getUserMedia(
@@ -89,7 +148,7 @@ document.addEventListener( 'DOMContentLoaded', () =>
 	} );
 	media.then( ( stream ) =>
 	{
-		Init( stream, video, canvas, fps );
+		Init( stream, video, canvas, fcanvas, fps );
 	} ).catch( ( error ) =>
 	{
 		console.log( error );
