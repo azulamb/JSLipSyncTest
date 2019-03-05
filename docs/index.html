@@ -84,6 +84,9 @@ function UpdateFaceBox( positions, canvas )
 	// また顔の領域は1.1倍くらいの大きさにすることにする。
 	const width = ( positions[ 14 ][ 0 ] - positions[ 0 ][ 0 ] ) * 1.2;
 
+	canvas.width = width;
+	canvas.height = height;
+
 	// 切り取り領域を作る。とりあえず範囲外のこととかは全く考えないこととする。
 	return { x: cx - width / 2, y: cy - height / 2, w: width, h: height };
 }
