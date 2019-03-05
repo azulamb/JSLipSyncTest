@@ -17,6 +17,7 @@ body > div { position: relative; }
 <div>
 	<video id="video" width="400" height="300" autoplay></video>
 	<canvas id="canvas" width="400" height="300"></canvas>
+	<input type="checkbox" id="wire">
 	<div id="fps">FPS:</div>
 </div>
 <script>
@@ -44,7 +45,7 @@ function RenderMouse( context, positions )
 	context.closePath();
 	context.stroke();
 }
-function Init( stream, video, canvas, fps )
+function Init( stream, video, canvas, wire, fps )
 {
 	//video.src = window.URL.createObjectURL( stream );
 	video.srcObject = stream;
@@ -63,7 +64,7 @@ function Init( stream, video, canvas, fps )
 		if ( positions === false ) { return NextFrame(); }
 		//console.log(positions);
 		context.clearRect( 0, 0, canvas.width, canvas.height );
-		//tracker.draw(canvas);
+		if ( wire.checked ) { tracker.draw(canvas); }
 		RenderMouse( context, positions );
 		NextFrame();
 	}
@@ -86,6 +87,7 @@ document.addEventListener( 'DOMContentLoaded', () =>
 	const video = document.getElementById( 'video' );
 	const canvas = document.getElementById( 'canvas' );
 	const fps = document.getElementById( 'fps' );
+	const wire = document.getElementById( 'wire' );
 
 	const media = navigator.mediaDevices.getUserMedia(
 	{
@@ -94,7 +96,7 @@ document.addEventListener( 'DOMContentLoaded', () =>
 	} );
 	media.then( ( stream ) =>
 	{
-		Init( stream, video, canvas, fps );
+		Init( stream, video, canvas, wire, fps );
 	} ).catch( ( error ) =>
 	{
 		console.log( error );
