@@ -17,7 +17,7 @@ body > div { position: relative; }
 <div>
 	<video id="video" width="400" height="300" autoplay></video>
 	<canvas id="canvas" width="400" height="300"></canvas>
-	<div id="fps"></div>
+	<div id="fps">FPS:</div>
 </div>
 <script>
 function RenderMouse( context, positions )
@@ -93,6 +93,7 @@ document.addEventListener( 'DOMContentLoaded', () =>
 	} ).catch( ( error ) =>
 	{
 		console.log( error );
+		fps.textContent = error.message + '';
 	} );
 } );
 </script>
