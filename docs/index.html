@@ -17,6 +17,7 @@ body > div { position: relative; }
 <div>
 	<video id="video" width="400" height="300" autoplay></video>
 	<canvas id="canvas" width="400" height="300"></canvas>
+	<canvas id="face" width="400" height="300"></canvas>
 	<div id="fps"></div>
 </div>
 <script>
@@ -40,16 +41,34 @@ function RenderMouse( context, positions, box )
 	context.lineWidth = 3;
 	context.strokeStyle = 'red';
 
+	// 顔の座標は切り取るので切り取り開始座標を足す。
 	context.beginPath();
-	context.moveTo( left[ 0 ],  left[ 1 ] );
-	context.lineTo( up[ 0 ],    up[ 1 ] );
-	context.lineTo( right[ 0 ], right[ 1 ] );
-	context.lineTo( down[ 0 ],  down[ 1 ] );
+	context.moveTo( box.x + left[ 0 ],  box.y + left[ 1 ] );
+	context.lineTo( box.x + up[ 0 ],    box.y + up[ 1 ] );
+	context.lineTo( box.x + right[ 0 ], box.y + right[ 1 ] );
+	context.lineTo( box.x + down[ 0 ],  box.y + down[ 1 ] );
 	context.closePath();
 	context.stroke();
 }
 
-function UpdateFaceBox( positions )
+function GetFace( video, canvas, context, box )
+{
+	// Videoの内容をCanvasに転写。
+	if ( box )
+	{
+		// 切り取り
+		context.drawImage( video, 0, 0, box.w, box.h, box.x, box.y, box.w, box.h );
+	} else
+	{
+		// 全画面(初回のみ)
+		canvas.width = video.width;
+		canvas.height = video.height;
+		context.drawImage( video, 0, 0 );
+	}
+	tracker.track( canvas );
+}
+
+function UpdateFaceBox( positions, canvas )
 {
 	// 人の顔は大雑把に目が顔の上下の中央付近に配置されます。
 	// そこで、右目の左側と左目の右側の中心を顔の中心とし、そこから顎や顔の左右の座標を元に顔が入る箱を作ります。
@@ -66,34 +85,39 @@ function UpdateFaceBox( positions )
 	// また顔の領域は1.1倍くらいの大きさにすることにする。
 	const width = ( positions[ 14 ][ 0 ] - positions[ 0 ][ 0 ] ) * 1.2;
 
+	canvas.width = width;
+	canvas.height = height;
+
 	// 切り取り領域を作る。とりあえず範囲外のこととかは全く考えないこととする。
 	return [ cx - width / 2, cy - height / 2, width, height ];
 }
 
-function Init( stream, video, canvas, fps )
+function Init( stream, video, canvas, fcanvas, fps )
 {
 	video.src = window.URL.createObjectURL( stream );
 	const context = canvas.getContext( '2d' );
 
 	const tracker = new clm.tracker();
 	tracker.init( pModel );
-	tracker.start( video );
+	//tracker.start( video );
 
 	let prev = Date.now();
 	let count = 0;
-	let box = undefined;
+	const face = fcanvas.getContext( '2d' );
+	const box = undefined;
 	function drawLoop()
 	{
 		requestAnimationFrame( drawLoop );
+		// 顔を切り抜く
+		GetFace( video, fcanvas, face, box );
+		// 顔の座標を取得
+		//tracker.track( fcanvas );
 		const positions = tracker.getCurrentPosition();
 		if ( positions === false ) { return; }
 		if ( !box )
 		{
 			// 次回以降顔座標切り取りを行う。
-			box = UpdateFaceBox( positions );
-			// 一旦停止して、切り取りを行うようにする。
-			tracker.stop();
-			tracker.start( video, box );
+			box = UpdateFaceBox( positions, fcanvas );
 		} else
 		{
 			// 唇の描画を行う。
@@ -118,6 +142,7 @@ document.addEventListener( 'DOMContentLoaded', () =>
 {
 	const video = document.getElementById( 'video' );
 	const canvas = document.getElementById( 'canvas' );
+	const fcanvas = document.getElementById( 'face' );
 	const fps = document.getElementById( 'fps' );
 
 	const media = navigator.mediaDevices.getUserMedia(
@@ -127,7 +152,7 @@ document.addEventListener( 'DOMContentLoaded', () =>
 	} );
 	media.then( ( stream ) =>
 	{
-		Init( stream, video, canvas, fps );
+		Init( stream, video, canvas, fcanvas, fps );
 	} ).catch( ( error ) =>
 	{
 		console.log( error );
