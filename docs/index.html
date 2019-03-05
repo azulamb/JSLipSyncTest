@@ -40,12 +40,11 @@ function RenderMouse( context, positions, box )
 	context.lineWidth = 3;
 	context.strokeStyle = 'red';
 
-	// 顔の座標は切り取るので切り取り開始座標を足す。
 	context.beginPath();
-	context.moveTo( box.x + left[ 0 ],  box.y + left[ 1 ] );
-	context.lineTo( box.x + up[ 0 ],    box.y + up[ 1 ] );
-	context.lineTo( box.x + right[ 0 ], box.y + right[ 1 ] );
-	context.lineTo( box.x + down[ 0 ],  box.y + down[ 1 ] );
+	context.moveTo( left[ 0 ],  left[ 1 ] );
+	context.lineTo( up[ 0 ],    up[ 1 ] );
+	context.lineTo( right[ 0 ], right[ 1 ] );
+	context.lineTo( down[ 0 ],  down[ 1 ] );
 	context.closePath();
 	context.stroke();
 }
