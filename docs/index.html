@@ -8,8 +8,9 @@
 	<title>リップシンクサンプル</title>
 	<style>
 body > div { position: relative; }
+body > div > div { position: absolute; top: 0; left: 0; }
 #video { transform: scaleX(-1); }
-#canvas { transform: scaleX(-1); }
+#canvas { transform: scaleX(-1); position: absolute; top: 0; left: 0; }
 	</style>
 </head>
  
@@ -17,8 +18,10 @@ body > div { position: relative; }
 <div>
 	<video id="video" width="400" height="300" autoplay></video>
 	<canvas id="canvas" width="400" height="300"></canvas>
-	<input type="checkbox" id="wire">
-	<div id="fps">FPS:</div>
+	<div>
+		<input type="checkbox" id="wire">
+		<span id="fps">FPS:</span>
+	</div>
 </div>
 <script>
 // 口の描画
