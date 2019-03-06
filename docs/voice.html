@@ -17,7 +17,7 @@ button { cursor: pointer; }
  
 <body>
 <div>
-	v3
+	v4
 	<input type="text" id="address">
 	<button id="start"></button>
 	<button id="receive"></button>
@@ -66,15 +66,13 @@ function InitSender( stream )
 {
 	const peer = PrepareConnection( stream );
 
-	peer.createOffer().then( ( sessionDescription ) =>
+	return peer.createOffer().then( ( sessionDescription ) =>
 	{
 		return peer.setLocalDescription( sessionDescription );
-	} ).catch( ( error ) =>
+	} ).then( () =>
 	{
-		reject( error );
+		return peer;
 	} );
-
-	return peer;
 }
 
 async function InitReceiver( stream, peer )
