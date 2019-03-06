@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<script src="clmtrackr.js"></script>
+	<script src="model_pca_20_svm.js"></script>
+	<title>音声転送サンプル</title>
+	<style>
+body > div { position: relative; }
+button { cursor: pointer; }
+#start:before { content: 'Start'; }
+#receive:before { content: 'Receive'; }
+#stop:before { content: 'Stop'; }
+	</style>
+</head>
+ 
+<body>
+<div>
+	<input type="text" id="address">
+	<button id="start"></button>
+	<button id="receive"></button>
+	<button id="stop"></button>
+	<audio id="player" controls></audio>
+	<textarea id="send"></textarea>
+	<textarea id="recv"></textarea>
+	<div id="message"></div>
+</div>
+<script>
+function PrintSDP( desc )
+{
+	document.getElementById( 'send' ).value = JSON.stringify( desc );
+}
+function GetSDP() { return document.getElementById( 'recv' ).value || ''; }
+function PrepareConnection( stream )
+{
+	const peer = new RTCPeerConnection( { iceServers: [] } );
+
+	peer.ontrack = ( event ) =>
+	{
+		const stream = event.streams[ 0 ];
+	};
+ 
+	peer.onicecandidate = ( event ) =>
+	{
+		if ( event.candidate )
+		{
+			console.log( event.candidate );
+		} else
+		{
+			PrintSDP( peer.localDescription );
+		}
+	};
+
+	if ( stream )
+	{
+		peer.addStream( stream );
+	}
+
+	return peer;
+}
+
+function InitSender( stream )
+{
+	const peer = PrepareConnection( stream );
+
+	peer.createOffer().then( ( sessionDescription ) =>
+	{
+		return peer.setLocalDescription( sessionDescription );
+	} ).catch( ( error ) =>
+	{
+		reject( error );
+	} );
+
+	return peer;
+}
+
+async function InitReceiver( stream, peer )
+{
+	const sdp = GetSDP();
+
+	let answer;
+
+	if ( peer )
+	{
+		// Startボタンを押した側なので答えを受け取るだけ。
+		answer = new RTCSessionDescription( { type : 'answer', sdp : sdp } );
+	} else
+	{
+		// 初めにReceiveを押した側なので答えを作ったりする。
+		const offer = new RTCSessionDescription( { type : 'offer', sdp : sdp } );
+		peer = PrepareConnection();
+		await peer.setRemoteDescription( offer );
+		answer = await peer.createAnswer();
+	}
+	return peer.setRemoteDescription( answer ).then( () => { return peer; } );
+}
+
+function Init( stream, player, start, receive, stop )
+{
+	// 未加工の音声データを取得する。
+	/*const audio = new AudioContext();
+	const input = audio.createMediaStreamSource( stream );
+	const processor = audio.createScriptProcessor( 1024, 1, 1 );
+
+	source.connect( processor );
+	processor.connect( audio.destination );
+
+	processor.onaudioprocess = ( event ) =>
+	{
+		// event.inputBuffer
+	};*/
+
+	// 手順
+	// 1. 開始側でStartボタンを押すとSDPが作られる。
+	// 2. SDPを受け取り側の下のテキストエリアに貼り付けてReceiveボタンを押す。
+	// 3. 受け取り側でSDPが作られる。
+	// 4. 受け取り側のSDPを開始側の下のテキストエリアに貼り付けてReceiveボタンを押す。
+	return new Promise( ( resolve, reject ) =>
+	{
+		let peer = undefined;
+
+		// 開始側はStartボタンを押す。
+		// 通信したいSDPを作るので、送信側に手動で送る。
+		start.addEventListener( 'click', () =>
+		{
+			InitSender( stream ).then( ( _peer ) =>
+			{
+				peer = _peer;
+			} ).catch( ( error ) =>
+			{
+				reject( error );
+			} );
+		} );
+
+		// 受け取り側はSDPをコピペしてReceiveボタンを押す。
+		// こちら側の答えのSDPを作る。
+		// 開始側に答えのSDPをコピペしてReceiveボタンを押すと、通信を開始する。
+		receive.addEventListener( 'click', () =>
+		{
+			InitReceiver( stream, peer ).then( ( _peer ) =>
+			{
+				// peerがすでにある場合は元のpeerと一致。
+				// undefinedの場合は新しく作られる。
+				peer = _peer;
+				resolve( 'OK' );
+			} ).catch( ( error ) =>
+			{
+				reject( error );
+			} );
+		} );
+
+	} );
+}
+
+// 一応安全面を考慮し、ページロード後に処理を行う。
+document.addEventListener( 'DOMContentLoaded', () =>
+{
+	const start = document.getElementById( 'start' );
+	const receive = document.getElementById( 'receive' );
+	const stop = document.getElementById( 'stop' );
+	const player = document.getElementById( 'player' );
+	const message = document.getElementById( 'message' );
+
+	// マイクの読み取り許可を求める。
+	const media = navigator.mediaDevices.getUserMedia(
+	{
+		video: false,
+		audio: true,
+	} );
+	media.then( ( stream ) =>
+	{
+		// 許可が出たので初期化を行う。
+		return Init( stream, player, start, receive, stop );
+	} ).then( ( result ) =>
+	{
+		message.textContent = result;
+	} ).catch( ( error ) =>
+	{
+		console.log( error );
+		message.textContent = [ error.name, error.message ].join( ':' );
+	} );
+} );
+</script>
+</body>
+</html>
