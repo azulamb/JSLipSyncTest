@@ -31,7 +31,7 @@ function PrintSDP( desc )
 {
 	document.getElementById( 'send' ).value = JSON.stringify( desc );
 }
-function GetSDP() { return document.getElementById( 'recv' ).value || ''; }
+function GetSDP() { return JSON.parse( document.getElementById( 'recv' ).value || '' ); }
 function PrepareConnection( stream )
 {
 	const peer = new RTCPeerConnection( { iceServers: [] } );
@@ -39,6 +39,7 @@ function PrepareConnection( stream )
 	peer.ontrack = ( event ) =>
 	{
 		const stream = event.streams[ 0 ];
+		// TODO: player.
 	};
  
 	peer.onicecandidate = ( event ) =>
