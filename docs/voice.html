@@ -17,7 +17,7 @@ button { cursor: pointer; }
  
 <body>
 <div>
-	v4
+	v5
 	<input type="text" id="address">
 	<button id="start"></button>
 	<button id="receive"></button>
@@ -33,14 +33,14 @@ function PrintSDP( desc )
 	document.getElementById( 'send' ).value = JSON.stringify( desc );
 }
 function GetSDP() { return JSON.parse( document.getElementById( 'recv' ).value || '' ); }
-function PrepareConnection( stream )
+function PrepareConnection( player, stream )
 {
 	const peer = new RTCPeerConnection( { iceServers: [] } );
 
 	peer.ontrack = ( event ) =>
 	{
 		const stream = event.streams[ 0 ];
-		// TODO: player.
+		player.srcObject = stream;
 	};
  
 	peer.onicecandidate = ( event ) =>
@@ -62,9 +62,9 @@ function PrepareConnection( stream )
 	return peer;
 }
 
-function InitSender( stream )
+function InitSender( player, stream )
 {
-	const peer = PrepareConnection( stream );
+	const peer = PrepareConnection( player, stream );
 
 	return peer.createOffer().then( ( sessionDescription ) =>
 	{
@@ -75,7 +75,7 @@ function InitSender( stream )
 	} );
 }
 
-async function InitReceiver( stream, peer )
+async function InitReceiver( player, stream, peer )
 {
 	const data = GetSDP();
 
@@ -90,7 +90,7 @@ async function InitReceiver( stream, peer )
 	{
 		// 初めにReceiveを押した側なので答えを作ったりする。
 		const offer = new RTCSessionDescription( { type: 'offer', sdp: data.sdp } );
-		peer = PrepareConnection();
+		peer = PrepareConnection( player, stream );
 		await peer.setRemoteDescription( offer );
 		const answer = await peer.createAnswer();
 		p = peer.setLocalDescription( answer );
@@ -126,7 +126,7 @@ function Init( stream, player, start, receive, stop )
 		// 通信したいSDPを作るので、送信側に手動で送る。
 		start.addEventListener( 'click', () =>
 		{
-			InitSender( stream ).then( ( _peer ) =>
+			InitSender( player, stream ).then( ( _peer ) =>
 			{
 				peer = _peer;
 			} ).catch( ( error ) =>
@@ -140,7 +140,7 @@ function Init( stream, player, start, receive, stop )
 		// 開始側に答えのSDPをコピペしてReceiveボタンを押すと、通信を開始する。
 		receive.addEventListener( 'click', () =>
 		{
-			InitReceiver( stream, peer ).then( ( _peer ) =>
+			InitReceiver( player, stream, peer ).then( ( _peer ) =>
 			{
 				// peerがすでにある場合は元のpeerと一致。
 				// undefinedの場合は新しく作られる。
