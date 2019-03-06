@@ -3,8 +3,6 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width,initial-scale=1">
-	<script src="clmtrackr.js"></script>
-	<script src="model_pca_20_svm.js"></script>
 	<title>音声転送サンプル</title>
 	<style>
 body > div { position: relative; }
@@ -17,7 +15,6 @@ button { cursor: pointer; }
  
 <body>
 <div>
-	v6
 	<input type="text" id="address">
 	<button id="start"></button>
 	<button id="receive"></button>
@@ -66,9 +63,9 @@ function InitSender( player, stream )
 {
 	const peer = PrepareConnection( player, stream );
 
-	return peer.createOffer().then( ( sessionDescription ) =>
+	return peer.createOffer().then( ( offer ) =>
 	{
-		return peer.setLocalDescription( sessionDescription );
+		return peer.setLocalDescription( offer );
 	} ).then( () =>
 	{
 		return peer;
@@ -115,9 +112,9 @@ function Init( stream, player, start, receive, stop )
 
 	// 手順
 	// 1. 開始側でStartボタンを押すとSDPが作られる。
-	// 2. SDPを受け取り側の下のテキストエリアに貼り付けてReceiveボタンを押す。
+	// 2. SDPを受け取り側の右のテキストエリアに貼り付けてReceiveボタンを押す。
 	// 3. 受け取り側でSDPが作られる。
-	// 4. 受け取り側のSDPを開始側の下のテキストエリアに貼り付けてReceiveボタンを押す。
+	// 4. 受け取り側のSDPを開始側の右のテキストエリアに貼り付けてReceiveボタンを押す。
 	return new Promise( ( resolve, reject ) =>
 	{
 		let peer = undefined;
