@@ -17,7 +17,7 @@ button { cursor: pointer; }
  
 <body>
 <div>
-	v2
+	v3
 	<input type="text" id="address">
 	<button id="start"></button>
 	<button id="receive"></button>
@@ -95,7 +95,7 @@ async function InitReceiver( stream, peer )
 		peer = PrepareConnection();
 		await peer.setRemoteDescription( offer );
 		const answer = await peer.createAnswer();
-		p = peerConnection.setLocalDescription( answer );
+		p = peer.setLocalDescription( answer );
 	}
 	return p.then( () => { return peer; } );
 }
