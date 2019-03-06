@@ -17,7 +17,7 @@ button { cursor: pointer; }
  
 <body>
 <div>
-	v1
+	v2
 	<input type="text" id="address">
 	<button id="start"></button>
 	<button id="receive"></button>
@@ -81,21 +81,23 @@ async function InitReceiver( stream, peer )
 {
 	const data = GetSDP();
 
-	let answer;
+	let p;
 
 	if ( peer )
 	{
 		// Startボタンを押した側なので答えを受け取るだけ。
-		answer = new RTCSessionDescription( { type: 'answer', sdp: data.sdp } );
+		const answer = new RTCSessionDescription( { type: 'answer', sdp: data.sdp } );
+		p = peer.setRemoteDescription( answer );
 	} else
 	{
 		// 初めにReceiveを押した側なので答えを作ったりする。
 		const offer = new RTCSessionDescription( { type: 'offer', sdp: data.sdp } );
 		peer = PrepareConnection();
 		await peer.setRemoteDescription( offer );
-		answer = await peer.createAnswer();
+		const answer = await peer.createAnswer();
+		p = peerConnection.setLocalDescription( answer );
 	}
-	return peer.setRemoteDescription( answer ).then( () => { return peer; } );
+	return p.then( () => { return peer; } );
 }
 
 function Init( stream, player, start, receive, stop )
