@@ -17,14 +17,14 @@ button { cursor: pointer; }
  
 <body>
 <div>
-	v5
+	v6
 	<input type="text" id="address">
 	<button id="start"></button>
 	<button id="receive"></button>
 	<button id="stop"></button>
 	<audio id="player" controls></audio>
-	<textarea id="send"></textarea>
-	<textarea id="recv"></textarea>
+	<textarea id="send" autocomplete="off" readonly></textarea>
+	<textarea id="recv" autocomplete="off"></textarea>
 	<div id="message"></div>
 </div>
 <script>
