@@ -78,18 +78,18 @@ function InitSender( stream )
 
 async function InitReceiver( stream, peer )
 {
-	const sdp = GetSDP();
+	const data = GetSDP();
 
 	let answer;
 
 	if ( peer )
 	{
 		// Startボタンを押した側なので答えを受け取るだけ。
-		answer = new RTCSessionDescription( { type : 'answer', sdp : sdp } );
+		answer = new RTCSessionDescription( { type: 'answer', sdp: data.sdp } );
 	} else
 	{
 		// 初めにReceiveを押した側なので答えを作ったりする。
-		const offer = new RTCSessionDescription( { type : 'offer', sdp : sdp } );
+		const offer = new RTCSessionDescription( { type: 'offer', sdp: data.sdp } );
 		peer = PrepareConnection();
 		await peer.setRemoteDescription( offer );
 		answer = await peer.createAnswer();
